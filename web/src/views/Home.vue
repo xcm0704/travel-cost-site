@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import http from '../api/client.js'
 import { trip, resetTrip, previewTotal, persistTrip } from '../stores/trip.js'
 import { toastError } from '../stores/toast.js'
+import CityPicker from '../components/CityPicker.vue'
 
 const router = useRouter()
 
@@ -290,23 +291,23 @@ onMounted(async function () {
         <div class="skeleton" style="width: 104px; height: 60px"></div>
         <div class="skeleton" style="width: 104px; height: 60px"></div>
       </div>
-      <div v-else class="chip-row" role="group" aria-label="目的地">
-        <button
-          v-for="d in destinations"
-          :key="d.id"
-          type="button"
-          class="chip"
-          :class="{ active: d.id === trip.destinationId }"
-          :aria-pressed="d.id === trip.destinationId"
-          @click="selectDestination(d)"
-        >
-          <strong>{{ d.name }}</strong>
-          <small>{{ d.province || '目的地' }}</small>
-        </button>
-      </div>
+      <CityPicker
+        v-else
+        :cities="destinations"
+        :selected-id="trip.destinationId"
+        @select="selectDestination"
+      />
 
-      <p v-if="current && current.intro" class="dest-intro">{{ current.intro }}</p>
-      <div v-else-if="!loading.dest && !destinations.length" class="empty">目的地数据还没录进来，稍后再看。</div>
+      <div v-if="current" class="dest-intro">
+        <p v-if="current.intro" class="dest-intro-text">{{ current.intro }}</p>
+        <a
+          v-if="current.refUrl"
+          class="ext-link"
+          :href="current.refUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >去携程看实时价 ↗</a>
+      </div>
     </section>
 
     <div class="ws-grid">
@@ -377,7 +378,7 @@ onMounted(async function () {
               <input v-model="qHotel" class="input" type="search" placeholder="比如 星海" @input="onSearchHotel" />
             </div>
           </div>
-          <p class="section-hint">住几晚已经在上面设好了，酒店只能选一家。再点一次取消。</p>
+          <p class="section-hint">住几晚已经在上面设好了，酒店只能选一家。再点一次取消。价格都是参考价，以实际为准。</p>
 
           <div v-if="loading.hotels" class="list">
             <div class="skeleton"></div>
@@ -386,13 +387,17 @@ onMounted(async function () {
           </div>
           <div v-else-if="!hotels.length" class="empty">这个目的地还没有酒店数据。</div>
           <div v-else class="list">
-            <button
+            <div
               v-for="h in hotels"
               :key="h.id"
-              type="button"
               class="item"
               :class="{ selected: isHotel(h) }"
+              role="button"
+              tabindex="0"
+              :aria-pressed="isHotel(h)"
               @click="pickHotel(h)"
+              @keydown.enter.prevent="pickHotel(h)"
+              @keydown.space.prevent="pickHotel(h)"
             >
               <span class="tick">✓</span>
               <span class="item-body">
@@ -405,8 +410,17 @@ onMounted(async function () {
               </span>
               <span class="item-side">
                 <span class="price">￥{{ money(h.pricePerNight) }}<small>/晚</small></span>
+                <span class="item-price-note">参考价</span>
               </span>
-            </button>
+              <a
+                v-if="h.refUrl"
+                class="ext-link item-ext"
+                :href="h.refUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click.stop
+              >去携程看实时价 ↗</a>
+            </div>
           </div>
         </div>
 
@@ -418,7 +432,7 @@ onMounted(async function () {
               <input v-model="qAttr" class="input" type="search" placeholder="比如 老虎滩" @input="onSearchAttr" />
             </div>
           </div>
-          <p class="section-hint">门票可以勾好几个，按人头算一次。</p>
+          <p class="section-hint">门票可以勾好几个，按人头算一次。价格是参考价，以实际为准。</p>
 
           <div v-if="loading.attractions" class="list">
             <div class="skeleton"></div>
@@ -427,13 +441,17 @@ onMounted(async function () {
           </div>
           <div v-else-if="!attractions.length" class="empty">这个目的地还没有门票数据。</div>
           <div v-else class="list">
-            <button
+            <div
               v-for="a in attractions"
               :key="a.id"
-              type="button"
               class="item"
               :class="{ selected: isAttraction(a) }"
+              role="button"
+              tabindex="0"
+              :aria-pressed="isAttraction(a)"
               @click="toggleAttraction(a)"
+              @keydown.enter.prevent="toggleAttraction(a)"
+              @keydown.space.prevent="toggleAttraction(a)"
             >
               <span class="tick">✓</span>
               <span class="item-body">
@@ -445,8 +463,17 @@ onMounted(async function () {
               </span>
               <span class="item-side">
                 <span class="price">￥{{ money(a.ticketPrice) }}<small>/人</small></span>
+                <span class="item-price-note">参考价</span>
               </span>
-            </button>
+              <a
+                v-if="a.refUrl"
+                class="ext-link item-ext"
+                :href="a.refUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click.stop
+              >去携程看实时价 ↗</a>
+            </div>
           </div>
         </div>
 
@@ -473,7 +500,7 @@ onMounted(async function () {
               </select>
             </label>
           </div>
-          <p class="section-hint">不勾具体车次也行，算总价时会自动用最便宜的一条。车费只能选一条。</p>
+          <p class="section-hint">不勾具体车次也行，算总价时会自动用最便宜的一条。车费只能选一条，按里程测算的参考价。</p>
 
           <div v-if="loading.transports" class="list">
             <div class="skeleton"></div>

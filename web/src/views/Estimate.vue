@@ -171,7 +171,7 @@ onMounted(function () {
     </section>
 
     <p class="section-hint" style="margin-top: 14px">
-      价格与明细来自服务端核算，只记一次去程车费（勾了返程就按往返算），不含吃饭和购物。
+      价格与明细来自服务端核算，只记一次去程车费（勾了返程就按往返算），不含吃饭和购物。所有价格都是<b>参考价，以实际为准</b>。
     </p>
   </div>
 </template>

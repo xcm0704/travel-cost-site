@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS destinations (
   name       VARCHAR(50) NOT NULL,
   province   VARCHAR(50) DEFAULT '',
   intro      VARCHAR(255) DEFAULT '',
+  ref_url    VARCHAR(255) NOT NULL DEFAULT '',
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_destinations_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -34,6 +35,7 @@ CREATE TABLE IF NOT EXISTS hotels (
   address          VARCHAR(200) DEFAULT '',
   price_per_night  DECIMAL(10,2) NOT NULL,
   note             VARCHAR(255) DEFAULT '',
+  ref_url          VARCHAR(255) NOT NULL DEFAULT '',
   updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_hotels_destination (destination_id),
   UNIQUE KEY uk_hotels_dest_name (destination_id, name),
@@ -47,6 +49,7 @@ CREATE TABLE IF NOT EXISTS attractions (
   ticket_price   DECIMAL(10,2) NOT NULL,
   open_time      VARCHAR(100) DEFAULT '',
   note           VARCHAR(255) DEFAULT '',
+  ref_url        VARCHAR(255) NOT NULL DEFAULT '',
   updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_attractions_destination (destination_id),
   UNIQUE KEY uk_attractions_dest_name (destination_id, name),

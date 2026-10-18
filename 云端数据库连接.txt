@@ -1,0 +1,9 @@
+# 云端数据库连接信息（填完保存即可，我不会把它发到聊天里，导入完会删掉这个文件）
+# TiDB Cloud 控制台 → Connect 里能看到 Host / Port / User；密码点 Generate Password 生成（只显示一次）
+
+DB_HOST=
+DB_PORT=4000
+DB_USER=
+DB_PASSWORD=
+DB_NAME=travel_cost
+DB_SSL=true

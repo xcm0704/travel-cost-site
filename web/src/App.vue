@@ -1,12 +1,15 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { session, clearLogin } from './stores/session.js'
 import { toastOk } from './stores/toast.js'
 import ToastHost from './components/ToastHost.vue'
+import SharePanel from './components/SharePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+const shareOpen = ref(false)
 
 const bare = computed(function () { return !!route.meta.public })
 const isAdminUser = computed(function () { return !!(session.user && session.user.role === 'admin') })
@@ -41,6 +44,7 @@ function logout() {
             <RouterLink to="/" class="nav-link">查费用</RouterLink>
           </template>
           <span v-if="username" class="nav-user" :title="'当前账号 ' + username">{{ username }}</span>
+          <button type="button" class="nav-link nav-share" @click="shareOpen = true">分享</button>
           <button type="button" class="nav-link nav-quit" @click="logout">退出</button>
         </nav>
       </div>
@@ -50,6 +54,7 @@ function logout() {
       <RouterView />
     </main>
 
+    <SharePanel v-model:open="shareOpen" />
     <ToastHost />
   </div>
 </template>

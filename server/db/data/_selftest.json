@@ -1,0 +1,88 @@
+{
+  "cities": [
+    {
+      "name": "测试城甲",
+      "province": "测试省",
+      "pinyin": "ceshijia",
+      "lat": 30.1,
+      "lon": 120.2,
+      "intro": "自测用的假城市，验完就删",
+      "hotels": [
+        {
+          "name": "测试甲酒店一",
+          "level": "经济型",
+          "address": "甲路1号",
+          "price": 188,
+          "note": "自测",
+          "source": "自测造数"
+        },
+        {
+          "name": "测试甲酒店二",
+          "level": "五星",
+          "address": "甲路2号",
+          "price": 888,
+          "note": "自测",
+          "source": "自测造数"
+        }
+      ],
+      "attractions": [
+        {
+          "name": "测试甲景点一",
+          "ticket": 60,
+          "openTime": "08:00-17:00",
+          "note": "自测",
+          "source": "自测造数"
+        },
+        {
+          "name": "测试甲景点二",
+          "ticket": 0,
+          "openTime": "全天",
+          "note": "免费开放",
+          "source": "自测造数"
+        }
+      ]
+    },
+    {
+      "name": "测试城乙",
+      "province": "测试省",
+      "pinyin": "ceshiyi",
+      "lat": 32.3,
+      "lon": 118.5,
+      "intro": "自测用的假城市，验完就删",
+      "hotels": [
+        {
+          "name": "测试乙酒店一",
+          "level": "舒适型",
+          "address": "乙路1号",
+          "price": 358,
+          "note": "自测",
+          "source": "自测造数"
+        },
+        {
+          "name": "测试乙酒店二",
+          "level": "经济型",
+          "address": "乙路2号",
+          "price": 158,
+          "note": "自测",
+          "source": "自测造数"
+        }
+      ],
+      "attractions": [
+        {
+          "name": "测试乙景点一",
+          "ticket": 120,
+          "openTime": "09:00-18:00",
+          "note": "自测",
+          "source": "自测造数"
+        },
+        {
+          "name": "测试乙景点二",
+          "ticket": 35,
+          "openTime": "09:00-17:00",
+          "note": "自测",
+          "source": "自测造数"
+        }
+      ]
+    }
+  ]
+}

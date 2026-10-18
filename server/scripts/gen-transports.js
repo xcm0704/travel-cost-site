@@ -71,7 +71,10 @@ function loadCoords(dirs) {
   const list = Array.isArray(dirs) ? dirs : [dirs];
   for (const dir of list) {
     if (!dir || !fs.existsSync(dir)) continue;
-    const files = fs.readdirSync(dir).filter(function (n) { return n.toLowerCase().endsWith('.json'); });
+    const files = fs
+      .readdirSync(dir)
+      // 跳过 . 开头的临时文件，与 import-cities 保持一致
+      .filter(function (n) { return n.toLowerCase().endsWith('.json') && n.charAt(0) !== '.'; });
     for (const name of files) {
       let parsed;
       try {

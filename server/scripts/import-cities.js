@@ -68,7 +68,8 @@ function readDataFiles(dirs) {
     const label = path.basename(dir);
     const names = fs
       .readdirSync(dir)
-      .filter(function (name) { return name.toLowerCase().endsWith('.json'); })
+      // 只吃正式数据文件，跳过 . 开头的临时/原始抓取文件（如 .raw-g4a.json）
+      .filter(function (name) { return name.toLowerCase().endsWith('.json') && name.charAt(0) !== '.'; })
       .sort();
     for (const name of names) {
       const full = path.join(dir, name);

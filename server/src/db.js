@@ -10,7 +10,7 @@ const pool = mysql.createPool({
   password: config.db.password,
   database: config.db.database,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: config.dbPoolMax,
   queueLimit: 0,
   // 与建表一致（utf8mb4_unicode_ci），否则云库上列与字面量比较会报 collation 混用
   charset: 'utf8mb4_unicode_ci',

@@ -1,0 +1,31 @@
+# Netlify 部署配置：静态站点走 CDN，/api/* 走 Node 函数（Express 原样复用）
+# 数据库连接信息在 Netlify 站点设置 → Environment variables 里填（DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME/DB_SSL/JWT_SECRET）
+
+[build]
+  # 先装根依赖（函数打包要用 serverless-http），再装前后端依赖并打包前端
+  command = "npm install --no-audit --no-fund && npm run build"
+  publish = "web/dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--no-audit --no-fund"
+  # Lambda 里连接池要小（config 里 serverless 默认 2，这里显式写死）
+  DB_POOL_MAX = "2"
+
+[functions]
+  # serverless-http / express / mysql2 都要打进去，用 esbuild 打包最稳
+  node_bundler = "esbuild"
+
+# 接口优先：/api/* 先打到函数，绝不能掉进下面的 SPA 回退
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# 前端 SPA 回退（刷新 /estimate 之类不 404）
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

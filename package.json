@@ -14,5 +14,8 @@
     "dev:server": "npm --prefix server run dev",
     "db:setup": "npm --prefix server run db:setup",
     "smoke": "node server/scripts/smoke.js"
+  },
+  "dependencies": {
+    "serverless-http": "^3.2.0"
   }
 }

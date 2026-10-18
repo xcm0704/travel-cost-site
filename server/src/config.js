@@ -15,6 +15,10 @@ const dbSsl =
     : null;
 
 const isProduction = String(env.NODE_ENV || '').toLowerCase() === 'production' || !!env.RENDER;
+// serverless 环境（Netlify Functions / AWS Lambda）：不要 listen、不要写文件、连接池要小
+const isServerless = !!(env.NETLIFY || env.AWS_LAMBDA_FUNCTION_NAME || env.LAMBDA_TASK_ROOT);
+// Lambda 里每个实例都建自己的池，连接数必须小；本地默认仍是 10
+const dbPoolMax = Number(env.DB_POOL_MAX || (isServerless ? 2 : 10));
 
 const db = {
   host: env.DB_HOST || '127.0.0.1',
@@ -62,6 +66,8 @@ function startupIssues() {
 module.exports = {
   port: Number(env.PORT || 3000),
   isProduction,
+  isServerless,
+  dbPoolMax: Number.isInteger(dbPoolMax) && dbPoolMax > 0 ? dbPoolMax : 10,
   db,
   dbSsl,
   dbTarget,

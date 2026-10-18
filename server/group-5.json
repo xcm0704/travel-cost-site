@@ -1,0 +1,233 @@
+[
+ {
+  "name": "张家口",
+  "province": "河北省",
+  "full": "张家口市",
+  "pinyin": "zhangjiakou",
+  "hot": false
+ },
+ {
+  "name": "晋中",
+  "province": "山西省",
+  "full": "晋中市",
+  "pinyin": "jinzhong",
+  "hot": false
+ },
+ {
+  "name": "通辽",
+  "province": "内蒙古自治区",
+  "full": "通辽市",
+  "pinyin": "tongliao",
+  "hot": false
+ },
+ {
+  "name": "抚顺",
+  "province": "辽宁省",
+  "full": "抚顺市",
+  "pinyin": "fushun",
+  "hot": false
+ },
+ {
+  "name": "铁岭",
+  "province": "辽宁省",
+  "full": "铁岭市",
+  "pinyin": "tieling",
+  "hot": false
+ },
+ {
+  "name": "松原",
+  "province": "吉林省",
+  "full": "松原市",
+  "pinyin": "songyuan",
+  "hot": false
+ },
+ {
+  "name": "伊春",
+  "province": "黑龙江省",
+  "full": "伊春市",
+  "pinyin": "yichun-heilongjiang",
+  "hot": false
+ },
+ {
+  "name": "南通",
+  "province": "江苏省",
+  "full": "南通市",
+  "pinyin": "nantong",
+  "hot": false
+ },
+ {
+  "name": "湖州",
+  "province": "浙江省",
+  "full": "湖州市",
+  "pinyin": "huzhou",
+  "hot": false
+ },
+ {
+  "name": "蚌埠",
+  "province": "安徽省",
+  "full": "蚌埠市",
+  "pinyin": "bangbu",
+  "hot": false
+ },
+ {
+  "name": "宿州",
+  "province": "安徽省",
+  "full": "宿州市",
+  "pinyin": "suzhou-anhui",
+  "hot": false
+ },
+ {
+  "name": "南平",
+  "province": "福建省",
+  "full": "南平市",
+  "pinyin": "nanping",
+  "hot": false
+ },
+ {
+  "name": "宜春",
+  "province": "江西省",
+  "full": "宜春市",
+  "pinyin": "yichun-jiangxi",
+  "hot": false
+ },
+ {
+  "name": "日照",
+  "province": "山东省",
+  "full": "日照市",
+  "pinyin": "rizhao",
+  "hot": false
+ },
+ {
+  "name": "鹤壁",
+  "province": "河南省",
+  "full": "鹤壁市",
+  "pinyin": "hebi",
+  "hot": false
+ },
+ {
+  "name": "商丘",
+  "province": "河南省",
+  "full": "商丘市",
+  "pinyin": "shangqiu",
+  "hot": false
+ },
+ {
+  "name": "荆门",
+  "province": "湖北省",
+  "full": "荆门市",
+  "pinyin": "jingmen",
+  "hot": false
+ },
+ {
+  "name": "湘潭",
+  "province": "湖南省",
+  "full": "湘潭市",
+  "pinyin": "xiangtan",
+  "hot": false
+ },
+ {
+  "name": "怀化",
+  "province": "湖南省",
+  "full": "怀化市",
+  "pinyin": "huaihua",
+  "hot": false
+ },
+ {
+  "name": "湛江",
+  "province": "广东省",
+  "full": "湛江市",
+  "pinyin": "zhanjiang",
+  "hot": false
+ },
+ {
+  "name": "清远",
+  "province": "广东省",
+  "full": "清远市",
+  "pinyin": "qingyuan",
+  "hot": false
+ },
+ {
+  "name": "防城港",
+  "province": "广西壮族自治区",
+  "full": "防城港市",
+  "pinyin": "fangchenggang",
+  "hot": false
+ },
+ {
+  "name": "崇左",
+  "province": "广西壮族自治区",
+  "full": "崇左市",
+  "pinyin": "chongzuo",
+  "hot": false
+ },
+ {
+  "name": "遂宁",
+  "province": "四川省",
+  "full": "遂宁市",
+  "pinyin": "suining",
+  "hot": false
+ },
+ {
+  "name": "巴中",
+  "province": "四川省",
+  "full": "巴中市",
+  "pinyin": "bazhong",
+  "hot": false
+ },
+ {
+  "name": "铜仁",
+  "province": "贵州省",
+  "full": "铜仁市",
+  "pinyin": "tongren",
+  "hot": false
+ },
+ {
+  "name": "普洱",
+  "province": "云南省",
+  "full": "普洱市",
+  "pinyin": "puer",
+  "hot": false
+ },
+ {
+  "name": "日喀则",
+  "province": "西藏自治区",
+  "full": "日喀则市",
+  "pinyin": "rikaze",
+  "hot": false
+ },
+ {
+  "name": "汉中",
+  "province": "陕西省",
+  "full": "汉中市",
+  "pinyin": "hanzhong",
+  "hot": false
+ },
+ {
+  "name": "武威",
+  "province": "甘肃省",
+  "full": "武威市",
+  "pinyin": "wuwei",
+  "hot": false
+ },
+ {
+  "name": "甘南",
+  "province": "甘肃省",
+  "full": "甘南藏族自治州",
+  "pinyin": "gannan",
+  "hot": false
+ },
+ {
+  "name": "石嘴山",
+  "province": "宁夏回族自治区",
+  "full": "石嘴山市",
+  "pinyin": "shizuishan",
+  "hot": false
+ },
+ {
+  "name": "博尔塔拉",
+  "province": "新疆维吾尔自治区",
+  "full": "博尔塔拉蒙古自治州",
+  "pinyin": "boertala",
+  "hot": false
+ }
+]

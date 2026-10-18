@@ -540,6 +540,13 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 -8px 24px -18px rgba(22, 39, 42, 0.5);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
+
+/* Netlify 免费版会往页面右下角注入「Powered by Netlify」角标（fixed、约 197×64、z-index 最高），
+   它会盖住底部固定条右侧的「算总价」按钮。检测到角标时给 <html> 加 .has-nl-badge，固定条整体上移让位。 */
+html.has-nl-badge .trip-bar { bottom: 76px; }
+html.has-nl-badge .page-with-bar { padding-bottom: calc(var(--bar-h) + 110px); }
+html.has-nl-badge .share-panel { margin-bottom: 76px; }
+
 .trip-bar-inner {
   max-width: 1060px;
   margin: 0 auto;

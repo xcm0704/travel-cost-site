@@ -42,13 +42,13 @@ img.paste(qr, ((W - qsize) // 2, card_y + 30))
 
 # 提示语
 center("微信 / 相机 扫一扫，直接打开", 1010, font(36, True), INK)
-center("注册后即可查 80 个旅游城市的酒店、门票、车费", 1065, font(28), MUTED)
+center("注册后即可查 348 个城市的酒店、门票、车费", 1065, font(28), MUTED)
 
 # 网址
 center("https://travel-cost-80.netlify.app", 1140, font(30), ACCENT)
 
 # 底部标签
-tags = ["80 个旅游城市", "886 家酒店", "487 个景点", "城际车费", "一键算总价"]
+tags = ["348 个旅游城市", "2233 家酒店", "1291 个景点", "城际车费", "一键算总价"]
 y = 1230
 x = 90
 f_tag = font(26)

@@ -47,27 +47,36 @@ async function main() {
     await conn.query('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
     console.log('数据库已就绪：' + DB_NAME);
 
+    const t0 = Date.now();
+    const mark = () => ((Date.now() - t0) / 1000).toFixed(1) + 's';
+
     await conn.query(schemaSql);
-    console.log('1/5 建表完成（IF NOT EXISTS，重复跑不会报错）');
+    console.log('1/5 建表完成（IF NOT EXISTS，重复跑不会报错）[' + mark() + ']');
 
     const addedColumns = await ensureColumns(conn);
-    console.log('2/5 表结构检查：' + (addedColumns.length ? '补上了列 ' + addedColumns.join('、') : 'ref_url 等列都在，无需改动'));
+    console.log('2/5 表结构检查：' + (addedColumns.length ? '补上了列 ' + addedColumns.join('、') : 'ref_url 等列都在，无需改动') + '[' + mark() + ']');
 
     await conn.query(seedSql);
-    console.log('3/5 策展数据已灌入（5 个城市 + 42 条真实线路，重复跑不会重复插入）');
+    console.log('3/5 策展数据已灌入（5 个城市 + 42 条真实线路，重复跑不会重复插入）[' + mark() + ']');
 
+    const tImport = Date.now();
     const importStats = await importCities(conn);
+    const importSec = ((Date.now() - tImport) / 1000).toFixed(1);
     console.log('4/5 城市数据导入：' +
       (importStats.files.length === 0
         ? '没有 data/*.json，跳过（不影响其它步骤）'
-        : '城市 ' + importStats.cities + '、酒店 ' + importStats.hotels + '、景点 ' + importStats.attractions));
+        : '城市 ' + importStats.cities + '、酒店 ' + importStats.hotels + '、景点 ' + importStats.attractions) +
+      '【导入耗时 ' + importSec + 's，累计 ' + mark() + '】');
 
+    const tGen = Date.now();
     const genStats = await generateTransports(conn);
-    console.log('5/5 里程测算车费：写 ' + genStats.batchSize + ' 条（' + genStats.stats.pairs + ' 组城市对）');
+    const genSec = ((Date.now() - tGen) / 1000).toFixed(1);
+    console.log('5/5 里程测算车费：写 ' + genStats.batchSize + ' 条（' + genStats.stats.pairs + ' 组城市对）' +
+      '【车费耗时 ' + genSec + 's，累计 ' + mark() + '】');
 
     // 真实价最后再覆盖一遍：curated 的 42 条线路永远优先于测算值
     await conn.query(seedSql);
-    console.log('收尾：策展真实价已覆盖测算值（ON DUPLICATE KEY UPDATE）');
+    console.log('收尾：策展真实价已覆盖测算值（ON DUPLICATE KEY UPDATE）[' + mark() + ']');
 
     const counts = await tableCounts(conn);
     console.log('各表条数：');
@@ -75,6 +84,7 @@ async function main() {
       console.log('  ' + table.padEnd(14, ' ') + count);
     }
     console.log('管理员账号：admin / 123456');
+    console.log('总耗时：' + mark());
   } finally {
     await conn.end();
   }

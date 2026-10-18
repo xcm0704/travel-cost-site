@@ -19,3 +19,5 @@ desktop.ini
 # 临时
 *.tmp
 coverage/
+# 隧道组件的临时文件
+tools/*.exe

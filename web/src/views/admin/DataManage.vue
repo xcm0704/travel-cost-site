@@ -225,11 +225,15 @@ async function afterChange() {
   if (tab.value === 'transports') await loadCities()
 }
 
-function resetFilters() {
+function clearFilters() {
   if (tab.value === 'destinations') fDestQ.value = ''
   if (tab.value === 'hotels') { fHotelDest.value = ''; fHotelQ.value = '' }
   if (tab.value === 'attractions') { fAttrDest.value = ''; fAttrQ.value = '' }
   if (tab.value === 'transports') { fTrFrom.value = ''; fTrTo.value = '' }
+}
+
+function resetFilters() {
+  clearFilters()
   loadRows()
 }
 
@@ -319,6 +323,8 @@ async function submitForm() {
       toastOk('已保存「' + (rowTitle(saved) || '这条数据') + '」')
     } else {
       const created = await http.post('/admin/' + key, payload)
+      // 新建的那条要能被看见：先清掉筛选，否则它可能落在筛选条件之外
+      clearFilters()
       toastOk('已新增「' + (rowTitle(created) || '一条数据') + '」')
     }
     closeForm()
@@ -731,5 +737,8 @@ onMounted(function () {
   .btn-add { margin-left: 0; width: 100%; }
   .btn-reset { flex: 1 1 30%; }
   .adm-foot-note { display: none; }
+  /* 手指点得着：行内按钮在手机上放大一点 */
+  .act { padding: 9px 11px; font-size: 13px; }
+  .row-acts { gap: 8px; }
 }
 </style>

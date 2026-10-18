@@ -15,6 +15,8 @@ function connectionOptions(extra) {
     charset: 'utf8mb4_unicode_ci',
     multipleStatements: true,
     connectTimeout: 20000,
+    // 会话时区固定东八区（云库 TiDB 默认 UTC，会让 CURRENT_TIMESTAMP 少 8 小时）
+    timezone: '+08:00',
   };
   return Object.assign(base, config.dbSsl ? { ssl: config.dbSsl } : {}, extra || {});
 }
@@ -23,6 +25,8 @@ async function createConnection(extra) {
   const conn = await mysql.createConnection(connectionOptions(extra));
   // 双保险：显式把连接排序规则对齐建表用的 utf8mb4_unicode_ci
   await conn.query('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
+  // 双保险：会话时区钉死东八区
+  await conn.query("SET time_zone = '+08:00'");
   return conn;
 }
 

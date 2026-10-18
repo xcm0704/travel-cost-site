@@ -1,4 +1,4 @@
-// 把 server/db/data/*.json 的城市/酒店/景点导进库里（幂等，靠自然键 upsert）
+// 把 server/db/data/*.json 与 server/db/data2/*.json 的城市/酒店/景点导进库里（幂等，靠自然键 upsert）
 // 用法： node server/scripts/import-cities.js
 //        npm run db:setup 会按顺序自动调用它
 const fs = require('fs');
@@ -8,7 +8,12 @@ const config = require('../src/config');
 const { createConnection, explainError } = require('../db/connect');
 const { ensureColumns } = require('../db/migrate');
 
-const DATA_DIR = path.resolve(__dirname, '..', 'db', 'data');
+// 两处都读：data/ 是 80 城（A/B/C），data2/ 是扩到 337 城的增量（part-N.json）
+const DATA_DIRS = [
+  path.resolve(__dirname, '..', 'db', 'data'),
+  path.resolve(__dirname, '..', 'db', 'data2'),
+];
+const DATA_DIR = DATA_DIRS[0];
 const CHUNK = 100;
 
 function text(value, max) {
@@ -55,21 +60,25 @@ async function upsertRows(conn, table, columns, rows, updateClause) {
   return affected;
 }
 
-function readDataFiles(dir) {
-  if (!fs.existsSync(dir)) return [];
-  const names = fs
-    .readdirSync(dir)
-    .filter(function (name) { return name.toLowerCase().endsWith('.json'); })
-    .sort();
+function readDataFiles(dirs) {
+  const list = Array.isArray(dirs) ? dirs : [dirs];
   const files = [];
-  for (const name of names) {
-    const full = path.join(dir, name);
-    try {
-      const parsed = JSON.parse(fs.readFileSync(full, 'utf8'));
-      const cities = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.cities) ? parsed.cities : [];
-      files.push({ name: name, cities: cities });
-    } catch (err) {
-      console.warn('[跳过] ' + name + ' 不是合法 JSON：' + (err && err.message));
+  for (const dir of list) {
+    if (!dir || !fs.existsSync(dir)) continue;
+    const label = path.basename(dir);
+    const names = fs
+      .readdirSync(dir)
+      .filter(function (name) { return name.toLowerCase().endsWith('.json'); })
+      .sort();
+    for (const name of names) {
+      const full = path.join(dir, name);
+      try {
+        const parsed = JSON.parse(fs.readFileSync(full, 'utf8'));
+        const cities = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.cities) ? parsed.cities : [];
+        files.push({ name: label + '/' + name, cities: cities });
+      } catch (err) {
+        console.warn('[跳过] ' + label + '/' + name + ' 不是合法 JSON：' + (err && err.message));
+      }
     }
   }
   return files;
@@ -77,12 +86,12 @@ function readDataFiles(dir) {
 
 async function importCities(conn, options) {
   const opts = options || {};
-  const dir = opts.dir || DATA_DIR;
+  const dirs = opts.dirs || (opts.dir ? [opts.dir] : DATA_DIRS);
   const quiet = !!opts.quiet;
 
   await ensureColumns(conn);
 
-  const files = readDataFiles(dir);
+  const files = readDataFiles(dirs);
   const stats = {
     files: files.map(function (f) { return f.name + '(' + f.cities.length + '城)'; }),
     cities: 0,
@@ -96,7 +105,7 @@ async function importCities(conn, options) {
 
   if (!quiet) {
     console.log(files.length === 0
-      ? '没找到 ' + dir + ' 下的 *.json（数据文件还没交付？跳过导入，不影响其它步骤）'
+      ? '没找到 ' + dirs.map(function (d) { return path.basename(d); }).join('/') + ' 下的 *.json（数据文件还没交付？跳过导入，不影响其它步骤）'
       : '读到的数据文件：' + stats.files.join('、'));
   }
   if (files.length === 0) return stats;
@@ -288,4 +297,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { importCities, refUrlFor, DATA_DIR };
+module.exports = { importCities, refUrlFor, DATA_DIR, DATA_DIRS };

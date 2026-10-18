@@ -16,8 +16,19 @@ const pool = mysql.createPool({
   charset: 'utf8mb4_unicode_ci',
   decimalNumbers: true,
   dateStrings: true,
+  // 会话时区固定东八区：TiDB 云库 system_time_zone=UTC，不钉住的话 CURRENT_TIMESTAMP
+  // 写进 created_at / updated_at 会比北京时间少 8 小时
+  timezone: '+08:00',
   ...(config.dbSsl ? { ssl: config.dbSsl } : {}),
 });
+
+// 双保险：每条池连接建好后都把会话时区钉死（timezone 选项只影响 JS 侧 Date 换算）
+const corePool = pool.pool || pool;
+if (corePool && typeof corePool.on === 'function') {
+  corePool.on('connection', function (conn) {
+    conn.query("SET time_zone = '+08:00'");
+  });
+}
 
 function fmtDate(value) {
   if (!value) return null;

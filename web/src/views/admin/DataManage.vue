@@ -4,6 +4,7 @@ import http from '../../api/client.js'
 import { toastOk } from '../../stores/toast.js'
 import AdminTable from '../../components/admin/AdminTable.vue'
 import AdminModal from '../../components/admin/AdminModal.vue'
+import CityPicker from '../../components/admin/CityPicker.vue'
 
 const TABS = [
   { key: 'destinations', label: '目的地' },
@@ -101,6 +102,9 @@ const fAttrDest = ref('')
 const fAttrQ = ref('')
 const fTrFrom = ref('')
 const fTrTo = ref('')
+const fTrMode = ref('')
+// 车费表几万条，进标签页不发请求：先选城市再查
+const trQueried = ref(false)
 
 const formOpen = ref(false)
 const editingId = ref(null)
@@ -122,6 +126,11 @@ const tabLabel = computed(function () {
 })
 
 const viewRows = computed(function () {
+  if (tab.value === 'transports') {
+    const m = fTrMode.value
+    if (!m) return rows.value
+    return rows.value.filter(function (r) { return r.mode === m })
+  }
   if (tab.value !== 'destinations') return rows.value
   const q = fDestQ.value.trim().toLowerCase()
   if (!q) return rows.value
@@ -134,7 +143,25 @@ const viewRows = computed(function () {
 
 const countText = computed(function () {
   if (loading.value) return '正在取数…'
+  if (tab.value === 'transports' && !trQueried.value) return '还没查'
   return '共 ' + viewRows.value.length + ' 条'
+})
+
+// 车费必须先给一个城市，否则等于全表扫描
+const trReady = computed(function () {
+  return !!(String(fTrFrom.value || '').trim() || String(fTrTo.value || '').trim())
+})
+
+const showTransportGuide = computed(function () {
+  return tab.value === 'transports' && !trQueried.value
+})
+
+const canReload = computed(function () {
+  return tab.value !== 'transports' || trReady.value
+})
+
+const tooMany = computed(function () {
+  return tab.value === 'transports' && viewRows.value.length > 150
 })
 
 function debounce(fn, ms) {
@@ -206,8 +233,16 @@ async function loadRows() {
       list = await http.get('/admin/hotels', { params: clean({ destinationId: fHotelDest.value, q: fHotelQ.value.trim() }) })
     } else if (key === 'attractions') {
       list = await http.get('/admin/attractions', { params: clean({ destinationId: fAttrDest.value, q: fAttrQ.value.trim() }) })
+    } else if (!trReady.value) {
+      // 没有城市条件就不查：全量 1.4 万条 / 3 MB，手机扛不住
+      rows.value = []
+      trQueried.value = false
+      return
     } else {
-      list = await http.get('/admin/transports', { params: clean({ from: fTrFrom.value, to: fTrTo.value }) })
+      trQueried.value = true
+      list = await http.get('/admin/transports', {
+        params: clean({ from: String(fTrFrom.value || '').trim(), to: String(fTrTo.value || '').trim() })
+      })
     }
     if (key === tab.value) rows.value = Array.isArray(list) ? list : []
   } catch (e) {
@@ -229,11 +264,21 @@ function clearFilters() {
   if (tab.value === 'destinations') fDestQ.value = ''
   if (tab.value === 'hotels') { fHotelDest.value = ''; fHotelQ.value = '' }
   if (tab.value === 'attractions') { fAttrDest.value = ''; fAttrQ.value = '' }
-  if (tab.value === 'transports') { fTrFrom.value = ''; fTrTo.value = '' }
+  if (tab.value === 'transports') { fTrFrom.value = ''; fTrTo.value = ''; fTrMode.value = '' }
 }
 
 function resetFilters() {
   clearFilters()
+  if (tab.value === 'transports') {
+    rows.value = []
+    trQueried.value = false
+    return
+  }
+  loadRows()
+}
+
+function runTransportQuery() {
+  if (!trReady.value) return
   loadRows()
 }
 
@@ -318,14 +363,22 @@ async function submitForm() {
   fields.value.forEach(function (f) { payload[f.key] = toWire(f, form[f.key]) })
   const key = tab.value
   try {
+    let saved = null
     if (editingId.value) {
-      const saved = await http.put('/admin/' + key + '/' + editingId.value, payload)
+      saved = await http.put('/admin/' + key + '/' + editingId.value, payload)
       toastOk('已保存「' + (rowTitle(saved) || '这条数据') + '」')
     } else {
-      const created = await http.post('/admin/' + key, payload)
+      saved = await http.post('/admin/' + key, payload)
+      toastOk('已新增「' + (rowTitle(saved) || '一条数据') + '」')
+    }
+    if (key === 'transports') {
+      // 车费不全量拉：把筛选条件对准刚保存的这条线路，保证能看见它
+      fTrFrom.value = (saved && saved.fromCity) || payload.fromCity
+      fTrTo.value = (saved && saved.toCity) || payload.toCity
+      fTrMode.value = ''
+    } else if (!editingId.value) {
       // 新建的那条要能被看见：先清掉筛选，否则它可能落在筛选条件之外
       clearFilters()
-      toastOk('已新增「' + (rowTitle(created) || '一条数据') + '」')
     }
     closeForm()
     await afterChange()
@@ -432,18 +485,22 @@ onMounted(function () {
         <template v-else>
           <label class="field field-sm">
             <span class="field-label">出发地</span>
-            <select v-model="fTrFrom" class="select" @change="loadRows">
-              <option value="">全部</option>
-              <option v-for="c in cities" :key="'f' + c" :value="c">{{ c }}</option>
-            </select>
+            <CityPicker v-model="fTrFrom" :options="cities" placeholder="搜城市名" label="出发地" />
           </label>
           <label class="field field-sm">
             <span class="field-label">到达地</span>
-            <select v-model="fTrTo" class="select" @change="loadRows">
+            <CityPicker v-model="fTrTo" :options="cities" placeholder="搜城市名" label="到达地" />
+          </label>
+          <label class="field field-sm">
+            <span class="field-label">方式</span>
+            <select v-model="fTrMode" class="select">
               <option value="">全部</option>
-              <option v-for="c in cities" :key="'t' + c" :value="c">{{ c }}</option>
+              <option v-for="m in MODES" :key="'m' + m" :value="m">{{ m }}</option>
             </select>
           </label>
+          <button type="button" class="btn btn-primary btn-query" :disabled="!trReady || loading" @click="runTransportQuery">
+            {{ loading && trQueried ? '查询中…' : '查询' }}
+          </button>
         </template>
 
         <button type="button" class="btn btn-ghost btn-reset" @click="resetFilters">重置</button>
@@ -452,17 +509,26 @@ onMounted(function () {
 
       <div class="adm-bar">
         <span class="adm-count">{{ countText }}</span>
-        <button type="button" class="adm-refresh" :disabled="loading" @click="loadRows">
+        <button type="button" class="adm-refresh" :disabled="loading || !canReload" @click="loadRows">
           {{ loading ? '刷新中…' : '刷新' }}
         </button>
       </div>
 
+      <p v-if="tooMany" class="adm-warn">查出来 {{ viewRows.length }} 条，有点多了 —— 把到达地（或出发地）也选上会清楚得多。</p>
+
+      <div v-if="showTransportGuide" class="adm-guide">
+        <p class="adm-guide-title">先选出发地或到达地，再点「查询」</p>
+        <p class="adm-guide-text">全库车费上万条，一次只查一条线路就够了 —— 这个标签页不会预先拉全表，所以现在先是空的。</p>
+        <p class="adm-guide-text">城市名记不准？在框里打一个字就能从列表里挑。要加新线路，点右上角「新增车费」。</p>
+      </div>
+
       <AdminTable
+        v-else
         :columns="columns"
         :rows="viewRows"
         :loading="loading"
         :min-width="minWidth"
-        empty="这个条件下没有数据，换个条件试试"
+        empty="这个条件下没有车费，换个城市或方式试试"
       >
         <template #id="{ row }"><span class="mono-faint">{{ row.id }}</span></template>
 
@@ -630,7 +696,51 @@ onMounted(function () {
 
 /* ---------- 筛选行 ---------- */
 .btn-reset { height: 44px; padding: 0 14px; }
+.btn-query { height: 44px; padding: 0 18px; }
 .btn-add { margin-left: auto; }
+
+/* 车费标签的空态引导：不先说清楚，用户会以为坏了 */
+.adm-guide {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 247, 0.62);
+  padding: 20px 18px 18px;
+}
+.adm-guide-title {
+  margin: 0 0 7px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--teal);
+}
+.adm-guide-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: var(--clay);
+  vertical-align: 3px;
+}
+.adm-guide-text {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.adm-warn {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--clay);
+  background: var(--clay-soft);
+  border: 1px solid #ecd6c4;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+}
 
 .adm-bar {
   display: flex;
@@ -735,7 +845,8 @@ onMounted(function () {
 
 @media (max-width: 720px) {
   .btn-add { margin-left: 0; width: 100%; }
-  .btn-reset { flex: 1 1 30%; }
+  .btn-reset { flex: 1 1 26%; }
+  .btn-query { flex: 1 1 40%; padding: 0 14px; }
   .adm-foot-note { display: none; }
   /* 手指点得着：行内按钮在手机上放大一点 */
   .act { padding: 9px 11px; font-size: 13px; }

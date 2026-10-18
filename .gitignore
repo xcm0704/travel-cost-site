@@ -21,3 +21,9 @@ desktop.ini
 coverage/
 # 隧道组件的临时文件
 tools/*.exe
+# 密钥类文件（本地填，不入库）
+GitHub授权-请填这里.txt
+云端数据库连接.txt
+server/server.out.log
+server/server.err.log
+

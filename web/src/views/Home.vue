@@ -5,6 +5,7 @@ import http from '../api/client.js'
 import { trip, resetTrip, previewTotal, persistTrip } from '../stores/trip.js'
 import { toastError } from '../stores/toast.js'
 import CityPicker from '../components/CityPicker.vue'
+import CitySelect from '../components/CitySelect.vue'
 
 const router = useRouter()
 
@@ -20,6 +21,11 @@ const qAttr = ref('')
 const modeFilter = ref('')
 
 const loading = reactive({ dest: true, hotels: false, attractions: false, transports: false })
+
+// 车费必须两端城市都选好才请求，避免一进页面就拉全量 1.4 万条
+const transportReady = computed(function () {
+  return !!(trip.fromCity && trip.toCity)
+})
 
 const MODES = ['高铁', '动车', '飞机', '大巴', '自驾']
 
@@ -99,27 +105,31 @@ async function loadAttractions() {
   }
 }
 
+let lastKey = ''
+let reqId = 0
+
 async function loadTransports() {
+  if (!transportReady.value) {
+    transports.value = []
+    lastKey = ''
+    return
+  }
+  const key = trip.fromCity + '>' + trip.toCity + '|' + modeFilter.value
+  if (key === lastKey) return
+  lastKey = key
+  const my = ++reqId
   loading.transports = true
   try {
-    const params = {}
-    if (trip.fromCity) params.from = trip.fromCity
-    if (trip.toCity) params.to = trip.toCity
+    const params = { from: trip.fromCity, to: trip.toCity }
     if (modeFilter.value) params.mode = modeFilter.value
     const list = await http.get('/transports', { params: params })
+    if (my !== reqId) return
     transports.value = Array.isArray(list) ? list : []
   } catch (e) {
-    transports.value = []
+    if (my === reqId) transports.value = []
   } finally {
-    loading.transports = false
+    if (my === reqId) loading.transports = false
   }
-}
-
-function ensureFromCity() {
-  if (!cities.value.length) return
-  if (trip.fromCity && trip.fromCity !== trip.toCity) return
-  const first = cities.value.find(function (c) { return c !== trip.toCity })
-  if (first) trip.fromCity = first
 }
 
 async function loadDestinationData() {
@@ -128,8 +138,9 @@ async function loadDestinationData() {
   transports.value = []
   if (!trip.destinationId) return
   trip.toCity = current.value ? current.value.name : trip.toCity
-  ensureFromCity()
-  await Promise.all([loadHotels(), loadAttractions(), loadTransports()])
+  // 车费不跟目的地一起拉，等用户选好出发地再查
+  if (transportReady.value) loadTransports()
+  await Promise.all([loadHotels(), loadAttractions()])
 }
 
 function selectDestination(d) {
@@ -143,7 +154,7 @@ function selectDestination(d) {
   qHotel.value = ''
   qAttr.value = ''
   modeFilter.value = ''
-  ensureFromCity()
+  if (transportReady.value) loadTransports()
   loadDestinationData()
 }
 
@@ -213,6 +224,8 @@ function clearAll() {
   qHotel.value = ''
   qAttr.value = ''
   modeFilter.value = ''
+  transports.value = []
+  lastKey = ''
   loadDestinationData()
 }
 
@@ -238,6 +251,11 @@ function goEstimate() {
     toastError('先勾上酒店、门票或车费里的至少一项')
     return
   }
+  if (!transportReady.value) {
+    toastError('先选好出发城市，车费要一起算进去')
+    tab.value = 'transports'
+    return
+  }
   const payload = {
     destinationId: trip.destinationId,
     nights: Number(trip.nights || 1),
@@ -257,9 +275,16 @@ const onSearchAttr = debounce(loadAttractions, 320)
 
 watch(function () { return trip.nights }, persistTrip)
 watch(function () { return trip.roundTrip }, persistTrip)
-watch(function () { return trip.fromCity }, function () { if (trip.fromCity) loadTransports() })
-watch(function () { return trip.toCity }, function () { if (trip.toCity) loadTransports() })
-watch(modeFilter, loadTransports)
+function onRouteChange() {
+  trip.transport = null
+  persistTrip()
+  if (transportReady.value) loadTransports()
+  else transports.value = []
+}
+
+watch(function () { return trip.fromCity }, onRouteChange)
+watch(function () { return trip.toCity }, onRouteChange)
+watch(modeFilter, function () { if (transportReady.value) loadTransports() })
 
 onMounted(async function () {
   await Promise.all([loadDestinations(), loadCities()])
@@ -480,18 +505,24 @@ onMounted(async function () {
         <!-- 车费 -->
         <div v-if="tab === 'transports'" class="tab-body">
           <div class="filters">
-            <label class="field field-sm">
+            <div class="field field-sm field-city">
               <span class="field-label">出发地</span>
-              <select v-model="trip.fromCity" class="select">
-                <option v-for="c in cities" :key="'from-' + c" :value="c">{{ c }}</option>
-              </select>
-            </label>
-            <label class="field field-sm">
+              <CitySelect
+                v-model="trip.fromCity"
+                :options="cities"
+                placeholder="选出发城市"
+                search-placeholder="搜出发城市"
+              />
+            </div>
+            <div class="field field-sm field-city">
               <span class="field-label">到达地</span>
-              <select v-model="trip.toCity" class="select">
-                <option v-for="c in cities" :key="'to-' + c" :value="c">{{ c }}</option>
-              </select>
-            </label>
+              <CitySelect
+                v-model="trip.toCity"
+                :options="cities"
+                placeholder="选到达城市"
+                search-placeholder="搜到达城市"
+              />
+            </div>
             <label class="field field-sm">
               <span class="field-label">方式</span>
               <select v-model="modeFilter" class="select">
@@ -500,14 +531,20 @@ onMounted(async function () {
               </select>
             </label>
           </div>
-          <p class="section-hint">不勾具体车次也行，算总价时会自动用最便宜的一条。车费只能选一条，按里程测算的参考价。</p>
+          <p class="section-hint">
+            两个城市都选好才会查车费（车次太多，进来不预先加载）。不勾具体车次也行，算总价时自动用最便宜的一条。车费是参考测算价。
+          </p>
 
-          <div v-if="loading.transports" class="list">
+          <div v-if="!transportReady" class="empty empty-guide">
+            <strong>选好出发地和到达地才能查车费</strong>
+            <span>上面两个城市选好后，这里会列出这趟的车次和参考价。</span>
+          </div>
+          <div v-else-if="loading.transports" class="list">
             <div class="skeleton"></div>
             <div class="skeleton"></div>
           </div>
           <div v-else-if="!transports.length" class="empty">
-            这个路线还没有录入车费，换一个出发地试试。
+            这个路线还没有录入车费，换一个出发地或方式试试。
           </div>
           <div v-else class="list">
             <button

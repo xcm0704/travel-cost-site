@@ -234,7 +234,26 @@ async function importCities(conn, options) {
   );
   stats.attractions = attractionRows.length;
 
+  // 兜底：策展 seed 里的酒店/景点没写 ref_url，用所属城市的 pinyin 反推补上
+  // destinations.ref_url 形如 https://you.ctrip.com/place/dalian.html → 取出 dalian
+  const [hotelBackfill] = await conn.query(
+    "UPDATE hotels h JOIN destinations d ON d.id = h.destination_id" +
+      " SET h.ref_url = CONCAT('https://hotels.ctrip.com/hotel/'," +
+      "   SUBSTRING_INDEX(SUBSTRING_INDEX(d.ref_url, '/place/', -1), '.html', 1))" +
+      " WHERE h.ref_url = '' AND d.ref_url LIKE '%/place/%.html'"
+  );
+  const [attractionBackfill] = await conn.query(
+    "UPDATE attractions a JOIN destinations d ON d.id = a.destination_id" +
+      " SET a.ref_url = CONCAT('https://you.ctrip.com/sight/'," +
+      "   SUBSTRING_INDEX(SUBSTRING_INDEX(d.ref_url, '/place/', -1), '.html', 1), '.html')" +
+      " WHERE a.ref_url = '' AND d.ref_url LIKE '%/place/%.html'"
+  );
+  stats.backfilled = { hotels: Number(hotelBackfill.affectedRows || 0), attractions: Number(attractionBackfill.affectedRows || 0) };
+
   if (!quiet) {
+    if (stats.backfilled.hotels || stats.backfilled.attractions) {
+      console.log('补全外链：按城市 pinyin 反推，酒店 ' + stats.backfilled.hotels + ' 条、景点 ' + stats.backfilled.attractions + ' 条');
+    }
     console.log('导入完成：城市 ' + stats.cities + '、酒店 ' + stats.hotels + '、景点 ' + stats.attractions +
       (stats.skippedCities + stats.skippedHotels + stats.skippedAttractions > 0
         ? '（跳过不合规记录：城市 ' + stats.skippedCities + '、酒店 ' + stats.skippedHotels + '、景点 ' + stats.skippedAttractions + '）'

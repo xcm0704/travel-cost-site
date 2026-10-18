@@ -10,13 +10,15 @@ INSERT INTO users (username, password_hash, role) VALUES
 ('admin', '$2a$10$5YS0w1wod6fclH0RswWnZ.8MaeBQpUoDaKAOj4ePptW1.9be2Euei', 'admin')
 ON DUPLICATE KEY UPDATE role = 'admin', password_hash = VALUES(password_hash);
 
-INSERT INTO destinations (name, province, intro) VALUES
-('大连', '辽宁', '浪漫之都，海滨风光和海鲜都不缺，夏天来最舒服'),
-('北京', '北京', '古都气派，故宫长城胡同串子，一年四季都能玩'),
-('上海', '上海', '外滩夜景和弄堂烟火气，逛吃逛吃就够几天'),
-('杭州', '浙江', '西湖山水加龙井茶香，慢下来才好看'),
-('成都', '四川', '火锅熊猫茶馆，安逸得很，适合躺平式旅游')
-ON DUPLICATE KEY UPDATE province = VALUES(province), intro = VALUES(intro);
+INSERT INTO destinations (name, province, intro, ref_url) VALUES
+('大连', '辽宁', '浪漫之都，海滨风光和海鲜都不缺，夏天来最舒服', 'https://you.ctrip.com/place/dalian.html'),
+('北京', '北京', '古都气派，故宫长城胡同串子，一年四季都能玩', 'https://you.ctrip.com/place/beijing.html'),
+('上海', '上海', '外滩夜景和弄堂烟火气，逛吃逛吃就够几天', 'https://you.ctrip.com/place/shanghai.html'),
+('杭州', '浙江', '西湖山水加龙井茶香，慢下来才好看', 'https://you.ctrip.com/place/hangzhou.html'),
+('成都', '四川', '火锅熊猫茶馆，安逸得很，适合躺平式旅游', 'https://you.ctrip.com/place/chengdu.html')
+ON DUPLICATE KEY UPDATE
+  province = VALUES(province), intro = VALUES(intro),
+  ref_url = IF(VALUES(ref_url) = '', ref_url, VALUES(ref_url));
 
 INSERT INTO hotels (destination_id, name, level, address, price_per_night, note) VALUES
 ((SELECT id FROM destinations WHERE name = '大连'), '大连星海假日酒店', '五星', '沙河口区中山路572号', 680.00, '海景房，走路就能到星海广场'),

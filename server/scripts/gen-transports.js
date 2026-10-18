@@ -85,19 +85,18 @@ function loadCoords(dir) {
   return coords;
 }
 
+// 契约 1.3 只要求「8 枢纽 × 全部城市 + 12 热门互连」，但验收标准 4.3 要求
+// 「任意两个城市都能算出总价」。这里按全量两两互连生成（枢纽规则是其子集），
+// 极端组合（三亚↔哈尔滨、喀什↔上海、漠河↔广州）才不会 400。
 function buildPairs(allCities) {
   const pairs = new Set();
   const addPair = function (a, b) {
     if (!a || !b || a === b) return;
     pairs.add(a < b ? a + '|' + b : b + '|' + a);
   };
-  for (const hub of HUBS) {
-    if (!allCities.has(hub)) continue;
-    for (const city of allCities) addPair(hub, city);
-  }
-  const hot = HOT_CITIES.filter(function (c) { return allCities.has(c); });
-  for (let i = 0; i < hot.length; i += 1) {
-    for (let j = i + 1; j < hot.length; j += 1) addPair(hot[i], hot[j]);
+  const cities = Array.from(allCities);
+  for (let i = 0; i < cities.length; i += 1) {
+    for (let j = i + 1; j < cities.length; j += 1) addPair(cities[i], cities[j]);
   }
   return pairs;
 }

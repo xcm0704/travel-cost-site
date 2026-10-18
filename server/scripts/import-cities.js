@@ -23,7 +23,10 @@ function text(value, max) {
 }
 
 function pinyinOf(city) {
-  return text(city && city.pinyin, 40).toLowerCase().replace(/\s+/g, '');
+  const raw = text(city && city.pinyin, 40).toLowerCase().replace(/\s+/g, '');
+  // 有些城市为了消歧义写成 taizhou-zhejiang（台州 vs 泰州），外链只用 "-" 之前的部分，
+  // 否则会拼出 hotels.ctrip.com/hotel/taizhou-zhejiang 这种不存在的路径
+  return raw.split('-')[0];
 }
 
 // 外链按契约生成：酒店 hotels.ctrip.com/hotel/{pinyin}，景点/城市 you.ctrip.com

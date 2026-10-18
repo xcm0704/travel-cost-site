@@ -19,7 +19,7 @@ function toInt(value) {
 // GET /api/destinations
 router.get('/destinations', requireAuth, async (req, res, next) => {
   try {
-    const [rows] = await pool.query('SELECT id, name, province, intro FROM destinations ORDER BY id ASC');
+    const [rows] = await pool.query('SELECT id, name, province, intro, ref_url FROM destinations ORDER BY id ASC');
     return res.json(rows.map(mapDestination));
   } catch (err) {
     return next(err);
@@ -62,7 +62,7 @@ router.get('/hotels', requireAuth, async (req, res, next) => {
 
     const sql =
       'SELECT h.id, h.destination_id, d.name AS destination_name, h.name, h.level, h.address,' +
-      ' h.price_per_night, h.note' +
+      ' h.price_per_night, h.note, h.ref_url' +
       ' FROM hotels h JOIN destinations d ON d.id = h.destination_id' +
       (where.length ? ' WHERE ' + where.join(' AND ') : '') +
       ' ORDER BY h.price_per_night ASC, h.id ASC';
@@ -92,7 +92,8 @@ router.get('/attractions', requireAuth, async (req, res, next) => {
     }
 
     const sql =
-      'SELECT a.id, a.destination_id, d.name AS destination_name, a.name, a.ticket_price, a.open_time, a.note' +
+      'SELECT a.id, a.destination_id, d.name AS destination_name, a.name, a.ticket_price, a.open_time, a.note,' +
+      ' a.ref_url' +
       ' FROM attractions a JOIN destinations d ON d.id = a.destination_id' +
       (where.length ? ' WHERE ' + where.join(' AND ') : '') +
       ' ORDER BY a.ticket_price ASC, a.id ASC';
@@ -126,10 +127,22 @@ router.get('/transports', requireAuth, async (req, res, next) => {
       params.push(mode);
     }
 
+    // 可选 limit：不传时返回全部（行为与之前一致），传了就截断，方便移动端只取前 N 条
+    let limitSql = '';
+    const rawLimit = req.query.limit;
+    if (rawLimit !== undefined && rawLimit !== '') {
+      const limit = Number(rawLimit);
+      if (!Number.isInteger(limit) || limit <= 0) {
+        return res.status(400).json({ error: 'limit 要填大于 0 的整数' });
+      }
+      limitSql = ' LIMIT ' + Math.min(limit, 5000);
+    }
+
     const sql =
       'SELECT id, from_city, to_city, mode, duration_minutes, price, note FROM transports' +
       (where.length ? ' WHERE ' + where.join(' AND ') : '') +
-      ' ORDER BY price ASC, id ASC';
+      ' ORDER BY price ASC, id ASC' +
+      limitSql;
 
     const [rows] = await pool.query(sql, params);
     return res.json(rows.map(mapTransport));

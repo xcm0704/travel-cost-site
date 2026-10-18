@@ -37,6 +37,7 @@ const mapDestination = (r) => ({
   name: r.name,
   province: r.province || '',
   intro: r.intro || '',
+  refUrl: r.ref_url || '',
 });
 
 const mapDestinationAdmin = (r) => ({ ...mapDestination(r), updatedAt: fmtDate(r.updated_at) });
@@ -50,6 +51,7 @@ const mapHotel = (r) => ({
   address: r.address || '',
   pricePerNight: num(r.price_per_night),
   note: r.note || '',
+  refUrl: r.ref_url || '',
 });
 
 const mapHotelAdmin = (r) => ({ ...mapHotel(r), updatedAt: fmtDate(r.updated_at) });
@@ -62,6 +64,7 @@ const mapAttraction = (r) => ({
   ticketPrice: num(r.ticket_price),
   openTime: r.open_time || '',
   note: r.note || '',
+  refUrl: r.ref_url || '',
 });
 
 const mapAttractionAdmin = (r) => ({ ...mapAttraction(r), updatedAt: fmtDate(r.updated_at) });

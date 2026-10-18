@@ -1,0 +1,18 @@
+{
+  "name": "travel-cost-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "旅游费用查询网站：Vue3 前端 + Express 4 后端 + MySQL（一条命令装依赖、打包、启动）",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm --prefix web ci --include=dev --no-audit --no-fund && npm --prefix web run build && npm --prefix server ci --include=dev --no-audit --no-fund",
+    "start": "node server/src/index.js",
+    "install:all": "npm --prefix web ci --include=dev --no-audit --no-fund && npm --prefix server ci --include=dev --no-audit --no-fund",
+    "dev:web": "npm --prefix web run dev",
+    "dev:server": "npm --prefix server run dev",
+    "db:setup": "npm --prefix server run db:setup",
+    "smoke": "node server/scripts/smoke.js"
+  }
+}

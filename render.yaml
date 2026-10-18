@@ -1,0 +1,39 @@
+# Render 部署蓝图（把这套配置交给 Render 就能起一个 Web Service）
+# 用法：代码推到 GitHub 后，Render -> New -> Blueprint，选这个仓库即可。
+services:
+  - type: web
+    name: travel-cost
+    runtime: node
+    plan: free
+    region: singapore # 离中国近一点；也可以换 oregon
+    branch: main
+    # 装依赖 + 打包前端；NODE_ENV=production 时 npm ci 默认跳过 devDependencies，
+    # 所以这里显式 --include=dev，保证 vite 能装上来打包
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # ↓↓↓ 这四项在 Render 面板里手填（TiDB Cloud 控制台 Connect 里能拿到）
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_PORT
+        value: "4000" # TiDB Cloud Serverless 默认 4000
+      - key: DB_NAME
+        value: travel_cost
+      # TiDB Cloud 必须走 TLS
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: "true" # 如果报证书校验失败，改成 "false"
+      # 让 Render 自动生成一串随机密钥
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d

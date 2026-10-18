@@ -1,0 +1,20 @@
+{
+  "name": "travel-cost-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "旅游费用查询网站 · 后端 (Express 4 + MySQL)",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:setup": "node db/setup.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.3"
+  }
+}

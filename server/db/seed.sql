@@ -3,7 +3,7 @@
 -- 重复执行会把价格等字段刷回本文件里的值
 
 USE `travel_cost`;
-SET NAMES utf8mb4;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 管理员账号：admin / 123456
 INSERT INTO users (username, password_hash, role) VALUES

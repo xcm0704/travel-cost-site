@@ -43,6 +43,8 @@ async function main() {
       'CREATE DATABASE IF NOT EXISTS `' + DB_NAME + '` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
     );
     await conn.query('USE `' + DB_NAME + '`');
+    // 连接排序规则与库/表对齐（TiDB 默认 collation_server 是 utf8mb4_bin，不显式指定会报混用）
+    await conn.query('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
     console.log('数据库已就绪：' + DB_NAME);
 
     await conn.query(schemaSql);

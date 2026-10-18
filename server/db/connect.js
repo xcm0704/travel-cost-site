@@ -9,7 +9,10 @@ function connectionOptions(extra) {
     port: config.db.port,
     user: config.db.user,
     password: config.db.password,
-    charset: 'utf8mb4',
+    // 用排序规则名而不是 'utf8mb4'：mysql2 把 'utf8mb4' 映射成 utf8mb4_general_ci，
+    // 与建表用的 utf8mb4_unicode_ci 不一致时，云库（TiDB）会报
+    // "Illegal mix of collations ... for operation '='"
+    charset: 'utf8mb4_unicode_ci',
     multipleStatements: true,
     connectTimeout: 20000,
   };
@@ -17,7 +20,10 @@ function connectionOptions(extra) {
 }
 
 async function createConnection(extra) {
-  return mysql.createConnection(connectionOptions(extra));
+  const conn = await mysql.createConnection(connectionOptions(extra));
+  // 双保险：显式把连接排序规则对齐建表用的 utf8mb4_unicode_ci
+  await conn.query('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
+  return conn;
 }
 
 // 把常见的数据库错误翻译成人话，别甩栈

@@ -12,7 +12,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  charset: 'utf8mb4',
+  // 与建表一致（utf8mb4_unicode_ci），否则云库上列与字面量比较会报 collation 混用
+  charset: 'utf8mb4_unicode_ci',
   decimalNumbers: true,
   dateStrings: true,
   ...(config.dbSsl ? { ssl: config.dbSsl } : {}),
